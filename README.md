@@ -4,8 +4,8 @@ A Telegram bot to download videos or images from tiktok without watermark. Try i
 
 ## Features
 ### Inline mode
-  In inline mode you can pick one(statisctic, music or video)
   [![Example](/img/inline_example.jpg)](https://t.me/XLR_TT_BOT)
+  In inline mode you can pick one(statisctic, music or video)
 
 ### Default mode
   Just send link of tiktok video or image to get video or media group of images
