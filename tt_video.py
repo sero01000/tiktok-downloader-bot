@@ -1,4 +1,3 @@
-from requests import get
 from httpx import AsyncClient
 
 from re import findall
