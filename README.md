@@ -9,7 +9,9 @@ A Telegram bot to download videos or images from tiktok without watermark. Try i
 
 ### Default mode
   Just send link of tiktok video or image to get video or media group of images
-
+  [![ExampleVideo](/img/video_xlr.JPG)]
+  [![ExampleImages](/img/images_xlr.JPG)]
+  
 ## Configure and launch bot
   - Download or run `git clone https://github.com/sero01000/tiktok-downloader-bot/`
   - Edit settings.py - add your `API_HASH`
