@@ -2,6 +2,12 @@
 # tiktok-downloader-bot
 A Telegram bot to download videos or images from tiktok without watermark. Try it https://t.me/XLR_TT_BOT
 
+## Configure and launch bot
+  - Download or run `git clone https://github.com/sero01000/tiktok-downloader-bot/`
+  - Edit settings.py - add your `API_HASH`
+  - Run `pip install -r requirements.txt`
+  - Run `python3 tt_download_bot.py`
+
 ## Features
 ### Inline mode
   [![Example](/img/inline_example.jpg)](https://t.me/XLR_TT_BOT)
@@ -12,8 +18,3 @@ A Telegram bot to download videos or images from tiktok without watermark. Try i
   ![ExampleVideo](/img/video_xlr.JPG)
   ![ExampleImages](/img/images_xlr.JPG)
   
-## Configure and launch bot
-  - Download or run `git clone https://github.com/sero01000/tiktok-downloader-bot/`
-  - Edit settings.py - add your `API_HASH`
-  - Run `pip install -r requirements.txt`
-  - Run `python3 tt_download_bot.py`
