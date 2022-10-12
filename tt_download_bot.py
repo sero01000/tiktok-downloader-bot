@@ -9,7 +9,7 @@ from re import findall
 from httpx import AsyncClient
 from hashlib import md5
 
-from tt_video import tt_videos_or_images, convert_image
+from tt_video import tt_videos_or_images, convert_image, divide_chunks
 from settings import languages, API_TOKEN
 
 
@@ -20,25 +20,24 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=storage)
 
+def get_user_lang(locale):
+    user_lang = locale.language
+    if user_lang not in languages:
+        user_lang = "en"
+    return user_lang
+
 
 @dp.message_handler(commands=['start', 'help'])
 @dp.throttled(rate=2)
 async def send_welcome(message: types.Message):
-    locale = message.from_user.locale
-    user_lang = locale.language
-    if user_lang not in languages:
-        user_lang = "en"
-
+    user_lang=get_user_lang(message.from_user.locale)
     await message.reply(languages[user_lang]["help"])
 
 
-@dp.message_handler(regexp='https://(www|vm)\.tiktok\.com/')
-@dp.throttled(rate=7)
+@dp.message_handler(regexp='https://\w{2,3}\.tiktok\.com/')
+@dp.throttled(rate=3)
 async def tt_download(message: types.Message):
-    locale = message.from_user.locale
-    user_lang = locale.language
-    if user_lang not in languages:
-        user_lang = "en"
+    user_lang=get_user_lang(message.from_user.locale)
 
     await message.reply(languages[user_lang]["wait"])
     link = findall(r'\bhttps?://.*tiktok\S+', message.text)[0]
@@ -51,15 +50,18 @@ async def tt_download(message: types.Message):
             await message.reply_audio(response["music"], caption='@XLR_TT_BOT')
             if response["is_video"]:
                 await message.reply_video(response["items"][0], caption='@XLR_TT_BOT')
+            #images
             else:
                 # metod1 download,convert to jpg, load to telegram, send MediaGroup
-                media = types.MediaGroup()
+                url_groups = list(divide_chunks(response["items"], 10))
                 async with AsyncClient() as client:
-                    for url in response["items"]:
-                        resp = await client.get(url)
-                        img_jpeg = convert_image(resp.content, "JPEG")
-                        media.attach_photo(types.InputFile(img_jpeg))
-                await message.reply_media_group(media=media)
+                    for group in url_groups:
+                        media = types.MediaGroup()
+                        for url in group:
+                            resp = await client.get(url)
+                            img_jpeg = convert_image(resp.content, "JPEG")
+                            media.attach_photo(types.InputFile(img_jpeg))
+                        await message.reply_media_group(media=media)
 
                 # metod2 send single photos by urls as webp sticker (less internet usage)
                 # for url in response["items"]:
@@ -72,7 +74,7 @@ async def tt_download(message: types.Message):
 
 
 @dp.throttled(rate=3)
-@dp.inline_handler(regexp='https://(www|vm)\.tiktok\.com/')
+@dp.inline_handler(regexp='https://\w{2,3}\.tiktok\.com/')
 async def inline_echo(inline_query: InlineQuery):
 
     text = inline_query.query or 'xlr'
@@ -80,10 +82,7 @@ async def inline_echo(inline_query: InlineQuery):
     link = findall(r'\bhttps?://.*tiktok\S+', text)[0]
     link = link.split("?")[0]
 
-    locale = inline_query.from_user.locale
-    user_lang = locale.language
-    if user_lang not in languages:
-        user_lang = "en"
+    user_lang=get_user_lang(inline_query.from_user.locale)
 
     try:
         response = await tt_videos_or_images(link)
@@ -139,7 +138,7 @@ async def inline_echo(inline_query: InlineQuery):
 
                     description=response["desc"]
                 )
-                # , cache_time=1
+
                 await bot.answer_inline_query(inline_query.id, results=[statistic, music, video])
 
             else:
@@ -156,7 +155,7 @@ async def inline_echo(inline_query: InlineQuery):
                     input_message_content=InputTextMessageContent(
                         text_url_images),
                 )
-                # , cache_time=1
+
                 await bot.answer_inline_query(inline_query.id, results=[statistic, music, images])
 
         else:
@@ -170,7 +169,7 @@ async def inline_echo(inline_query: InlineQuery):
 
                 input_message_content=InputTextMessageContent('error_0_items'),
             )
-            # , cache_time=1
+
             await bot.answer_inline_query(inline_query.id, results=[error_inline])
 
     except Exception as e:
@@ -184,17 +183,14 @@ async def inline_echo(inline_query: InlineQuery):
 
             input_message_content=InputTextMessageContent(f'error {e!r}'),
         )
-        # , cache_time=1
+
         await bot.answer_inline_query(inline_query.id, results=[error_inline])
 
 
 @dp.message_handler()
 @dp.throttled(rate=3)
 async def echo(message: types.Message):
-    locale = message.from_user.locale
-    user_lang = locale.language
-    if user_lang not in languages:
-        user_lang = "en"
+    user_lang=get_user_lang(message.from_user.locale)
 
     await message.answer(languages[user_lang]["invalid_link"])
 

@@ -4,6 +4,9 @@ from re import findall
 from io import BytesIO
 from PIL import Image
 
+def divide_chunks(list, n):
+    for i in range(0, len(list), n):
+        yield list[i:i + n]
 
 def convert_image(image, extention):  # "JPEG"
     byteImgIO = BytesIO()
@@ -15,7 +18,6 @@ def convert_image(image, extention):  # "JPEG"
 
 async def tt_videos_or_images(url):
     headers1 = {
-        "Host": "vm.tiktok.com",
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0",
         "Accept": "text/html, application/xhtml+xml, application/xml; q=0.9, image/avif, image/webp, */*; q=0.8"
     }
