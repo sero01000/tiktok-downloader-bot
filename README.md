@@ -1,6 +1,7 @@
 [![XLR](/img/xlr.jpg)](https://t.me/XLR_TT_BOT)
 # tiktok-downloader-bot
 A Telegram bot to download videos or images from tiktok without watermark. Try it https://t.me/XLR_TT_BOT
+Bot translated into these languagess: ru, en, cn, hi, es, fr, ar, pt, id, pl, cs, de, it, tr, he, uk
 
 ## Configure and launch bot
   - Download or run `git clone https://github.com/sero01000/tiktok-downloader-bot/`
