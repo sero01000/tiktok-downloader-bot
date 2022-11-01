@@ -49,7 +49,11 @@ async def tt_download(message: types.Message):
             await message.reply(f'❤️ {languages[user_lang]["likes"]}:{response["statistic"]["digg_count"]}\n💬 {languages[user_lang]["comments"]}:{response["statistic"]["comment_count"]}\n📢 {languages[user_lang]["share"]}:{response["statistic"]["share_count"]}\n👤 {languages[user_lang]["views"]}:{response["statistic"]["play_count"]}\n🗣 {languages[user_lang]["nickname"]}:{response["nickname"]}\n{response["desc"]}')
             await message.reply_audio(response["music"], caption='@XLR_TT_BOT')
             if response["is_video"]:
-                await message.reply_video(response["items"][0], caption='@XLR_TT_BOT')
+                print("items",response["items"][0])
+                if response["large_for_tg"]:
+                    await message.reply(f'{languages[user_lang]["large_for_tg"]}:{response["items"][0]}')
+                else:
+                    await message.reply_video(response["items"][0], caption='@XLR_TT_BOT')
             #images
             else:
                 # metod1 download,convert to jpg, load to telegram, send MediaGroup
@@ -122,22 +126,37 @@ async def inline_echo(inline_query: InlineQuery):
             if response["is_video"]:
                 video_url = response["items"][0]
 
-                result_id_video: str = md5(
+                if response["large_for_tg"]:
+                    result_id_video_url: str = md5(
+                        video_url.encode()).hexdigest()
+                    video = InlineQueryResultArticle(
+
+                        id=result_id_video_url,
+
+                        title=f'video get url',
+
+                        input_message_content=InputTextMessageContent(
+                            video_url),
+                    )
+
+                else:
+                    result_id_video: str = md5(
                     f"{link} video".encode()).hexdigest()
-                video = InlineQueryResultVideo(
 
-                    id=result_id_video,
+                    video = InlineQueryResultVideo(
 
-                    title='download video',
+                        id=result_id_video,
 
-                    video_url=video_url,
+                        title='download video',
 
-                    thumb_url=response["cover"],
+                        video_url=video_url,
 
-                    mime_type="video/mp4",
+                        thumb_url=response["cover"],
 
-                    description=response["desc"]
-                )
+                        mime_type="video/mp4",
+
+                        description=response["desc"]
+                    )
 
                 await bot.answer_inline_query(inline_query.id, results=[statistic, music, video])
 
