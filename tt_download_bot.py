@@ -20,6 +20,7 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=storage)
 
+
 def get_user_lang(locale):
     user_lang = locale.language
     if user_lang not in languages:
@@ -30,14 +31,14 @@ def get_user_lang(locale):
 @dp.message_handler(commands=['start', 'help'])
 @dp.throttled(rate=2)
 async def send_welcome(message: types.Message):
-    user_lang=get_user_lang(message.from_user.locale)
+    user_lang = get_user_lang(message.from_user.locale)
     await message.reply(languages[user_lang]["help"])
 
 
-@dp.message_handler(regexp='https://\w{2,3}\.tiktok\.com/')
+@dp.message_handler(regexp='https://\w{1,3}\.tiktok\.com/')
 @dp.throttled(rate=3)
 async def tt_download(message: types.Message):
-    user_lang=get_user_lang(message.from_user.locale)
+    user_lang = get_user_lang(message.from_user.locale)
 
     await message.reply(languages[user_lang]["wait"])
     link = findall(r'\bhttps?://.*tiktok\S+', message.text)[0]
@@ -49,12 +50,12 @@ async def tt_download(message: types.Message):
             await message.reply(f'❤️ {languages[user_lang]["likes"]}:{response["statistic"]["digg_count"]}\n💬 {languages[user_lang]["comments"]}:{response["statistic"]["comment_count"]}\n📢 {languages[user_lang]["share"]}:{response["statistic"]["share_count"]}\n👤 {languages[user_lang]["views"]}:{response["statistic"]["play_count"]}\n🗣 {languages[user_lang]["nickname"]}:{response["nickname"]}\n{response["desc"]}')
             await message.reply_audio(response["music"], caption='@XLR_TT_BOT')
             if response["is_video"]:
-                print("items",response["items"][0])
+                print("items", response["items"][0])
                 if response["large_for_tg"]:
                     await message.reply(f'{languages[user_lang]["large_for_tg"]}:{response["items"][0]}')
                 else:
                     await message.reply_video(response["items"][0], caption='@XLR_TT_BOT')
-            #images
+            # images
             else:
                 # metod1 download,convert to jpg, load to telegram, send MediaGroup
                 url_groups = list(divide_chunks(response["items"], 10))
@@ -78,7 +79,7 @@ async def tt_download(message: types.Message):
 
 
 @dp.throttled(rate=3)
-@dp.inline_handler(regexp='https://\w{2,3}\.tiktok\.com/')
+@dp.inline_handler(regexp='https://\w{1,3}\.tiktok\.com/')
 async def inline_echo(inline_query: InlineQuery):
 
     text = inline_query.query or 'xlr'
@@ -86,7 +87,7 @@ async def inline_echo(inline_query: InlineQuery):
     link = findall(r'\bhttps?://.*tiktok\S+', text)[0]
     link = link.split("?")[0]
 
-    user_lang=get_user_lang(inline_query.from_user.locale)
+    user_lang = get_user_lang(inline_query.from_user.locale)
 
     try:
         response = await tt_videos_or_images(link)
@@ -141,7 +142,7 @@ async def inline_echo(inline_query: InlineQuery):
 
                 else:
                     result_id_video: str = md5(
-                    f"{link} video".encode()).hexdigest()
+                        f"{link} video".encode()).hexdigest()
 
                     video = InlineQueryResultVideo(
 
@@ -209,7 +210,7 @@ async def inline_echo(inline_query: InlineQuery):
 @dp.message_handler()
 @dp.throttled(rate=3)
 async def echo(message: types.Message):
-    user_lang=get_user_lang(message.from_user.locale)
+    user_lang = get_user_lang(message.from_user.locale)
 
     await message.answer(languages[user_lang]["invalid_link"])
 
