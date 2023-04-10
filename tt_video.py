@@ -6,6 +6,7 @@ from PIL import Image
 from subprocess import check_output, Popen, TimeoutExpired, PIPE
 import time
 import asyncio
+import platform
 
 
 def divide_chunks(list, n):
@@ -20,6 +21,35 @@ def convert_image(image, extention):  # "JPEG"
     byteImgIO.seek(0)
     return byteImgIO
 
+def get_url_of_yt_dlp():
+    download_url="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp"
+
+    os = platform.system().lower()
+    arch = platform.machine().lower();
+    if os == None or arch == None:
+        print(f"Cant detect os({os}) or arch({arch})")
+    else:
+        print(os,arch)
+        if os == "darwin":
+            return f"{download_url}_macos"
+        elif os == "windows":
+            if arch in ["amd64","x86_64"]:
+                arch=".exe"
+            elif arch in ["i386","i686"]:
+                arch="_x86.exe"
+            else:
+                return None
+            return f"{download_url}{arch}"
+        elif os == "linux":
+            if arch in ["aarch64","aarch64_be", "armv8b", "armv8l"]:
+                arch = "_linux_aarch64"
+            elif arch in ["amd64","x86_64"]:
+                arch = "_linux"
+            elif arch == "armv7l":
+                arch="_linux_armv7l"
+            else:
+                return None
+            return f"{download_url}{arch}"
 
 # only video or music
 # async
@@ -138,31 +168,3 @@ async def tt_videos_or_images(url):
             else:
                 print("err. images_url 0 len")
         return {"is_video": False, "large_for_tg": False, "cover": None, "items": images_url, "nickname": nickname, "desc": desc, "statistic": statistic, "music": music}
-
-
-async def main():
-    t1 = asyncio.create_task(yt_dlp("https://vm.tiktok.com/ZMYR8FjbC/", 1))
-    # t2 = asyncio.create_task(serve_orders())
-    await asyncio.wait([t1])
-
-# import sys
-# from asyncio.subprocess import PIPE, STDOUT
-
-
-# async def get_lines(shell_command):
-#     p = await asyncio.create_subprocess_shell(shell_command,
-#             stdin=PIPE, stdout=PIPE, stderr=STDOUT)
-#     return (await p.communicate())[0].splitlines()
-
-# async def main():
-#     # get commands output concurrently
-#     coros = [get_lines('"{e}" -c "print({i:d}); import time; time.sleep({i:d})"'
-#                        .format(i=i, e=sys.executable))
-#              for i in reversed(range(5))]
-#     for f in asyncio.as_completed(coros): # print in the order they finish
-#         print(await f)
-
-# yt_dlp("https://vm.tiktok.com/ZMYRokaYS/", 1)
-# evtlp = asyncio.new_event_loop()
-# asyncio.set_event_loop(evtlp)
-# asyncio.run(main())

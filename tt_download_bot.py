@@ -10,9 +10,8 @@ from re import findall
 from httpx import AsyncClient
 from hashlib import md5
 
-from tt_video import tt_videos_or_images, convert_image, divide_chunks, yt_dlp
+from tt_video import tt_videos_or_images, convert_image, divide_chunks, yt_dlp, get_url_of_yt_dlp
 from settings import languages, API_TOKEN
-
 
 storage = MemoryStorage()
 logging.basicConfig(level=logging.INFO)
@@ -21,6 +20,10 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=storage)
 
+def is_tool(name):
+    from shutil import which
+
+    return which(name) is not None
 
 def get_user_lang(locale):
     user_lang = locale.language
@@ -69,4 +72,22 @@ async def echo(message: types.Message):
 
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    if is_tool("yt-dlp"):
+        executor.start_polling(dp, skip_updates=True)
+    else:
+        yt_dlp_url=get_url_of_yt_dlp()
+        if yt_dlp_url != None:
+            print("found link:",yt_dlp_url)
+            if yt_dlp_url.endswith(".exe"):
+                program_name="yt-dlp.exe"
+            else:
+                "yt-dlp"
+            import urllib.request
+            try:
+                urllib.request.urlretrieve(yt_dlp_url, program_name)
+                executor.start_polling(dp, skip_updates=True)
+            except Exception as e:
+                print(e)
+        else:
+            print("cant find yt-dlp download link for your OS.")
+
