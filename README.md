@@ -1,3 +1,6 @@
+# yt-dlp version
+auto download yt-dlp if not installed
+
 [![XLR](/img/xlr.jpg)](https://t.me/XLR_TT_BOT)
 # tiktok-downloader-bot
 A Telegram bot to download videos or images from tiktok without watermark. Try it https://t.me/XLR_TT_BOT
