@@ -3,6 +3,9 @@ from httpx import AsyncClient
 from re import findall
 from io import BytesIO
 from PIL import Image
+from subprocess import check_output, Popen, TimeoutExpired, PIPE
+import time
+import asyncio
 
 
 def divide_chunks(list, n):
@@ -18,13 +21,53 @@ def convert_image(image, extention):  # "JPEG"
     return byteImgIO
 
 
+# only video or music
+# async
+async def yt_dlp(url):
+    proc = await asyncio.create_subprocess_exec(
+        'yt-dlp', url, "--max-filesize", "50M", "--max-downloads", "1", "-o", "%(title)s.%(ext)s", "--restrict-filenames",
+        stdout=asyncio.subprocess.PIPE,
+        stdin=asyncio.subprocess.PIPE,
+    )
+    print("good?", url)
+    try:
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
+    except asyncio.exceptions.TimeoutError:
+        try:
+            proc.kill()
+        except OSError:
+            print("timeout no such process")
+            # Ignore 'no such process' error
+            pass
+        raise Exception('timeout')
+
+    for line in stdout.decode("utf-8").splitlines():
+        print(line)
+        filename = findall(r" Destination: (.*?)$", line)
+        if len(filename) == 0:
+            filename = findall(r" (.*?) has already been downloaded$", line)
+            if len(filename) > 0:
+                filename = filename[0]
+                print("FOUND")
+                break
+        else:
+            filename = filename[0]
+            print("FOUND")
+            break
+    else:
+        print("file not found")
+        raise Exception('file not found')
+    return filename
+
+
 async def tt_videos_or_images(url):
     video_id_from_url = findall('https://www.tiktok.com/@.*?/video/(\d+)', url)
+    user_agent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0"
     if len(video_id_from_url) > 0:
         video_id = video_id_from_url[0]
     else:
         headers1 = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0",
+            "User-Agent": user_agent,
             "Accept": "text/html, application/xhtml+xml, application/xml; q=0.9, image/avif, image/webp, */*; q=0.8"
         }
 
@@ -37,27 +80,33 @@ async def tt_videos_or_images(url):
         elif r1.status_code == 403:
             video_id = findall("video&#47;(\d+)", r1.text)[0]
         else:
-            raise BaseException('Unknown status code', r1.status_code)
+            # raise BaseException('Unknown status code', r1.status_code)
+            return BaseException('Unknown status code', r1.status_code)
 
+    print("video_id:", video_id)
     url2 = f"http://api16-normal-useast5.us.tiktokv.com/aweme/v1/aweme/detail/?aweme_id={video_id}"
-    headers2 = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0"}
     async with AsyncClient() as client:
-        r2 = await client.get(url2, headers=headers2)
+        r2 = await client.get(url2, headers={"User-Agent": user_agent})
     print("r2", r2.status_code)
-    resp = r2.json()
+    print("r2_headers:", r2.headers)
+    print("r2_text:", r2.text)
+    # resp = r2.json()
+    resp = r2.json().get("aweme_detail")
+    if resp == None:
+        # raise BaseException('No video here')
+        return BaseException('No video here')
 
-    is_video = len(resp["aweme_detail"]["video"]["bit_rate"]) > 0
+    is_video = len(resp["video"]["bit_rate"]) > 0
     print("is_video", is_video)
 
-    nickname = resp["aweme_detail"]["author"]["nickname"]
-    desc = resp["aweme_detail"]["desc"]
-    statistic = resp["aweme_detail"]["statistics"]
-    music = resp["aweme_detail"]["music"]["play_url"]["uri"]
+    nickname = resp["author"]["nickname"]
+    desc = resp["desc"]
+    statistic = resp["statistics"]
+    music = resp["music"]["play_url"]["uri"]
     if is_video:
-        cover_url = resp["aweme_detail"]["video"]["origin_cover"]["url_list"][0]
+        cover_url = resp["video"]["origin_cover"]["url_list"][0]
 
-        for bit_rate in resp["aweme_detail"]["video"]["bit_rate"]:
+        for bit_rate in resp["video"]["bit_rate"]:
             height = bit_rate["play_addr"]["height"]
             width = bit_rate["play_addr"]["width"]
             data_size = int(bit_rate["play_addr"]["data_size"])
@@ -70,21 +119,50 @@ async def tt_videos_or_images(url):
                       1000000, "MB", "quality_type:", quality_type)
             else:
                 print("good_for_tg", height, "x", width, data_size /
-                      1000000, "MB", "quality_type:", quality_type)
+                      1000000, "MB", "quality_type:", quality_type,
+                      "url:", url_list[0])
                 videos_url = url_list
                 large_for_tg = False
                 break
         else:
-            videos_url = resp["aweme_detail"]["video"]["bit_rate"][0]["play_addr"]["url_list"]
+            videos_url = resp["video"]["bit_rate"][0]["play_addr"]["url_list"]
             large_for_tg = True
         return {"is_video": True, "large_for_tg": large_for_tg, "cover": cover_url, "items": videos_url, "nickname": nickname, "desc": desc, "statistic": statistic, "music": music}
 
     else:
         images_url = []
-        images = resp["aweme_detail"]["image_post_info"]["images"]
+        images = resp["image_post_info"]["images"]
         for i in images:
             if len(i["display_image"]["url_list"]) > 0:
                 images_url.append(i["display_image"]["url_list"][0])
             else:
                 print("err. images_url 0 len")
         return {"is_video": False, "large_for_tg": False, "cover": None, "items": images_url, "nickname": nickname, "desc": desc, "statistic": statistic, "music": music}
+
+
+async def main():
+    t1 = asyncio.create_task(yt_dlp("https://vm.tiktok.com/ZMYR8FjbC/", 1))
+    # t2 = asyncio.create_task(serve_orders())
+    await asyncio.wait([t1])
+
+# import sys
+# from asyncio.subprocess import PIPE, STDOUT
+
+
+# async def get_lines(shell_command):
+#     p = await asyncio.create_subprocess_shell(shell_command,
+#             stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+#     return (await p.communicate())[0].splitlines()
+
+# async def main():
+#     # get commands output concurrently
+#     coros = [get_lines('"{e}" -c "print({i:d}); import time; time.sleep({i:d})"'
+#                        .format(i=i, e=sys.executable))
+#              for i in reversed(range(5))]
+#     for f in asyncio.as_completed(coros): # print in the order they finish
+#         print(await f)
+
+# yt_dlp("https://vm.tiktok.com/ZMYRokaYS/", 1)
+# evtlp = asyncio.new_event_loop()
+# asyncio.set_event_loop(evtlp)
+# asyncio.run(main())
