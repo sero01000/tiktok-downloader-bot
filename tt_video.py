@@ -55,11 +55,10 @@ def get_url_of_yt_dlp():
 # async
 async def yt_dlp(url):
     proc = await asyncio.create_subprocess_exec(
-        'yt-dlp', url, "--max-filesize", "50M", "--max-downloads", "1", "-o", "%(title)s.%(ext)s", "--restrict-filenames",
+        'yt-dlp', url, "--max-filesize", "50M", "--max-downloads", "1", "--restrict-filenames",#, "-o", "%(title)s.%(ext)s", 
         stdout=asyncio.subprocess.PIPE,
         stdin=asyncio.subprocess.PIPE,
     )
-    print("good?", url)
     try:
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
     except asyncio.exceptions.TimeoutError:

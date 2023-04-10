@@ -53,12 +53,12 @@ async def tt_download2(message: types.Message):
             await message.reply_audio(open(response, 'rb'), caption='@XLR_TT_BOT', title=link)
         # video
         else:
-            print("VIDEO:", response)
+            logging.info(f"VIDEO: {response}")
             await message.reply_video(open(response, 'rb'), caption='@XLR_TT_BOT',)
         os.remove(response)
 
     except Exception as e:
-        print(e)
+        logging.error(e)
         await message.reply(f"error: {e}")
         os.remove(response)
 
@@ -73,11 +73,13 @@ async def echo(message: types.Message):
 
 if __name__ == '__main__':
     if is_tool("yt-dlp"):
+        logging.info("yt-dlp installed")
         executor.start_polling(dp, skip_updates=True)
     else:
+        logging.info("yt-dlp not installed")
         yt_dlp_url=get_url_of_yt_dlp()
         if yt_dlp_url != None:
-            print("found link:",yt_dlp_url)
+            logging.info(f"found link: {yt_dlp_url}")
             if yt_dlp_url.endswith(".exe"):
                 program_name="yt-dlp.exe"
             else:
@@ -87,7 +89,7 @@ if __name__ == '__main__':
                 urllib.request.urlretrieve(yt_dlp_url, program_name)
                 executor.start_polling(dp, skip_updates=True)
             except Exception as e:
-                print(e)
+                logging.error(e)
         else:
-            print("cant find yt-dlp download link for your OS.")
+            logging.error("Cant find yt-dlp download link for your OS.")
 
