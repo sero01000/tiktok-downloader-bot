@@ -83,7 +83,7 @@ if __name__ == '__main__':
             if yt_dlp_url.endswith(".exe"):
                 program_name="yt-dlp.exe"
             else:
-                "yt-dlp"
+                program_name="yt-dlp"
             import urllib.request
             try:
                 urllib.request.urlretrieve(yt_dlp_url, program_name)
