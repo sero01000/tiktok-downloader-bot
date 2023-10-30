@@ -76,20 +76,5 @@ if __name__ == '__main__':
         logging.info("yt-dlp installed")
         executor.start_polling(dp, skip_updates=True)
     else:
-        logging.info("yt-dlp not installed")
-        yt_dlp_url=get_url_of_yt_dlp()
-        if yt_dlp_url != None:
-            logging.info(f"found link: {yt_dlp_url}")
-            if yt_dlp_url.endswith(".exe"):
-                program_name="yt-dlp.exe"
-            else:
-                program_name="yt-dlp"
-            import urllib.request
-            try:
-                urllib.request.urlretrieve(yt_dlp_url, program_name)
-                executor.start_polling(dp, skip_updates=True)
-            except Exception as e:
-                logging.error(e)
-        else:
-            logging.error("Cant find yt-dlp download link for your OS.")
+        logging.error("yt-dlp not installed! Run: sudo apt install yt-dlp")
 
