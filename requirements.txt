@@ -1,4 +1,4 @@
-aiogram
-httpx
+aiogram==2.25.2
+httpx==0.28.1
 Pillow
 yt-dlp
